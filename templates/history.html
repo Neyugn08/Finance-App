@@ -1,0 +1,28 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Quote
+{% endblock %}
+
+{% block main%}
+    <table style="width=80%">
+        <tr>
+            <th>User_id</th>
+            <th>Stock</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Spending</th>
+            <th>Date</th>
+        </tr>
+        {% for purchase in purchases %}
+             <tr>
+                <td>{{purchase["id"]}}</td>
+                <td>{{purchase["stock"]}}</td>
+                <td>{{purchase["amount"]}}</td>
+                <td>{{purchase["status"]}}</td>
+                <td>{{spending[purchase["spending"]]}}</td>
+                <td>{{purchase["time"]}}</td>
+             </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+{% block main %}
+    <div>Your money: {{money}}</div>
+    <table style="width=80%">
+        <tr>
+            <th>Stock</th>
+            <th>Amount</th>
+            <th>Current price</th>
+            <th>Total value</th>
+        </tr>
+        {% for purchase in purchases %}
+             <tr>
+                <td>{{purchase["stock"]}}</td>
+                <td>{{purchase["amount"]}}</td>
+                <td>{{purchase["price"]}}</td>
+                <td>{{purchase["totalValue"]}}</td>
+             </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Register
+{% endblock %}
+
+{% block main %}
+    <form action="/sell" method="POST">
+        <select name="symbol">
+            {% for option in options %}
+                <option> {{option[0]}} </option>
+            {% endfor %}
+        </select>
+        <input name="shares" type="number">
+        <button type="submit">Sell</button>
+    </form>
+{% endblock %}
