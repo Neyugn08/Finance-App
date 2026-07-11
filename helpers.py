@@ -1,10 +1,12 @@
 import requests
-
-from flask import redirect, render_template, session
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
+from starlette.middleware.sessions import SessionMiddleware
 from functools import wraps
 
+templates = Jinja2Templates(directory="templates")
 
-def apology(message, code=400):
+def apology(request, message, code=400):
     """Render message as an apology to user."""
 
     def escape(s):
@@ -26,24 +28,13 @@ def apology(message, code=400):
             s = s.replace(old, new)
         return s
 
-    return render_template("apology.html", top=code, bottom=escape(message)), code
+    return templates.TemplateResponse("apology.html", {"request": request, "top": code, "bottom": escape(message)}), code
 
-
-def login_required(f):
-    """
-    Decorate routes to require login.
-
-    https://flask.palletsprojects.com/en/latest/patterns/viewdecorators/
-    """
-
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if session.get("user_id") is None:
-            return redirect("/login")
-        return f(*args, **kwargs)
-
-    return decorated_function
-
+def login_required(request):
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        return RedirectResponse(url="/login", status_code=303)
+    return user_id
 
 def lookup(symbol):
     """Look up quote for symbol."""
@@ -62,7 +53,6 @@ def lookup(symbol):
     except (KeyError, ValueError) as e:
         print(f"Data parsing error: {e}")
     return None
-
 
 def usd(value):
     """Format value as USD."""
