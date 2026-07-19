@@ -1,0 +1,39 @@
+services:
+  app: 
+    image: app
+    ports: 
+      - 8080:8000
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      SESSION_SECRET_KEY: ${SESSION_SECRET_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - finance-network
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: finance
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d finance"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - finance-network
+      
+networks:
+  finance-network:
+    name: finance-network
+    external: true
+
+volumes:
+  db-data:

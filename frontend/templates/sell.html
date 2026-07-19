@@ -8,7 +8,7 @@
     <form action="/sell" method="POST">
         <select name="symbol">
             {% for option in options %}
-                <option> {{option[0]}} </option>
+                <option> {{option["stock"]}} </option>
             {% endfor %}
         </select>
         <input name="shares" type="number">

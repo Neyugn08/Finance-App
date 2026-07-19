@@ -1,9 +1,13 @@
 import requests
+from pathlib import Path
+import psycopg 
+from decimal import Decimal
 from fastapi import Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-templates = Jinja2Templates(directory="templates")
+BASE_DIR = Path(__file__).resolve().parent
+templates = Jinja2Templates(directory=str(BASE_DIR / ".." / "frontend" / "templates"))
 
 def apology(request, message, code=400):
     """Render message as an apology to user."""
@@ -67,9 +71,9 @@ def usd(value):
     return f"${value:,.2f}"
 
 def get_db_name(): 
-    return "finance.db"  # Default database name
+    return "finance"  # Default database name
 
-def table_reconciliation(buyVal, sellVal, db, user_id): 
+def table_reconciliation(buyVal, sellVal, cursor, user_id): 
     # Implement a dict to avoid nested loop
     stock_mapping = {} 
     for index, i in enumerate(buyVal):
@@ -77,14 +81,21 @@ def table_reconciliation(buyVal, sellVal, db, user_id):
     for j in sellVal:
         i = buyVal[stock_mapping[j["stock"]]]
         stock = i["stock"]
-        check = db.execute("SELECT stock FROM ownedStock WHERE stock = ? AND id = ?", (stock, user_id))
-        tst = check.fetchone()
+        cursor.execute("SELECT stock FROM ownedStock WHERE stock = %s AND id = %s", (stock, user_id))
+        tst = cursor.fetchone()
         if not tst:
             # Initialising some values of the table
-            db.execute("INSERT INTO ownedStock (id, stock, amount, price, totalValue) VALUES (?, ?, ?, ?, ?)", (user_id, stock, 0, "0", "0"))
-        amount = int(i["SUM(amount)"]) - j["SUM(amount)"]
+            cursor.execute("INSERT INTO ownedStock (id, stock, amount, price, total_value) VALUES (%s, %s, %s, %s, %s)", (user_id, stock, 0, "0", "0"))
+        amount = i["total_amount"] - j["total_amount"]
         tmp = lookup(stock)
-        price = tmp["price"]
-        db.execute("UPDATE ownedStock SET amount = ?, price = ?, totalValue = ? WHERE id = ? AND stock = ?", (amount, price, usd(amount * tmp["price"]), user_id, stock))
-    db.commit()
+        price = Decimal(str(tmp["price"]))
+        cursor.execute("UPDATE ownedStock SET amount = %s, price = %s, total_value = %s WHERE id = %s AND stock = %s", (amount, price, amount * price, user_id, stock))
     
+def setup_db(info, db_name):
+    with psycopg.connect(f"{info} dbname={db_name}") as conn: 
+        with conn.cursor() as cursor: 
+            # Create new tables if there's none
+            cursor.execute("CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, username TEXT NOT NULL, hash TEXT NOT NULL, cash NUMERIC NOT NULL DEFAULT 10000.00)")
+            cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS username ON users (username)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS history (id INTEGER NOT NULL REFERENCES users(id), stock TEXT NOT NULL, amount NUMERIC NOT NULL, status TEXT NOT NULL, spending NUMERIC NOT NULL, time TEXT NOT NULL)")
+            cursor.execute("CREATE TABLE IF NOT EXISTS ownedStock (id INTEGER NOT NULL REFERENCES users(id), stock TEXT NOT NULL, amount INTEGER NOT NULL, price NUMERIC NOT NULL, total_value NUMERIC NOT NULL)")
