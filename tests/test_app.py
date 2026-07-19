@@ -13,7 +13,10 @@ from backend.app import app
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / ".." / "frontend" / "templates"))
 app.dependency_overrides[get_db_name] = lambda: "test"
-conn_info = f"host={DB_HOST} port=5432 user={DB_USER} password={DB_PASSWORD}"
+if instance_connection_name: 
+    conn_info = f"host={DB_HOST} user={DB_USER} password={DB_PASSWORD}"
+else: 
+    conn_info = f"host={DB_HOST} port=5432 user={DB_USER} password={DB_PASSWORD}"
 db_name = "test"
 
 @pytest.fixture

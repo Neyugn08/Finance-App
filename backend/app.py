@@ -15,7 +15,10 @@ from fastapi.staticfiles import StaticFiles
 app = FastAPI()
 BASE_DIR = Path(__file__).resolve().parent
 app.mount("/static", StaticFiles(directory=BASE_DIR / ".." / "frontend" / "static"), name="static")
-conn_info = f"host={DB_HOST} port=5432 user={DB_USER} password={DB_PASSWORD}"
+if instance_connection_name: 
+    conn_info = f"host={DB_HOST} user={DB_USER} password={DB_PASSWORD}"
+else: 
+    conn_info = f"host={DB_HOST} port=5432 user={DB_USER} password={DB_PASSWORD}"
 setup_db(conn_info, get_db_name())
 
 # Custom filter
